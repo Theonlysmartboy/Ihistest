@@ -10,9 +10,10 @@ use App\Http\Requests\Admin\StoreOurPatientsRequest;
 use App\Http\Requests\Admin\UpdateOurPatientsRequest;
 use App\Http\Controllers\Traits\FileUploadTrait;
 use Yajra\DataTables\DataTables;
+use App\Patient;
 
-class OurPatientsController extends Controller
-{
+class OurPatientsController extends Controller {
+
     use FileUploadTrait;
 
     /**
@@ -20,22 +21,21 @@ class OurPatientsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        if (! Gate::allows('our_patient_access')) {
+    public function index() {
+        if (!Gate::allows('our_patient_access')) {
             return abort(401);
         }
 
 
-        
+
         if (request()->ajax()) {
             $query = OurPatient::query();
             $template = 'actionsTemplate';
-            if(request('show_deleted') == 1) {
-                
-        if (! Gate::allows('our_patient_delete')) {
-            return abort(401);
-        }
+            if (request('show_deleted') == 1) {
+
+                if (!Gate::allows('our_patient_delete')) {
+                    return abort(401);
+                }
                 $query->onlyTrashed();
                 $template = 'restoreTemplate';
             }
@@ -61,7 +61,7 @@ class OurPatientsController extends Controller
             $table->addColumn('massDelete', '&nbsp;');
             $table->addColumn('actions', '&nbsp;');
             $table->editColumn('actions', function ($row) use ($template) {
-                $gateKey  = 'our_patient_';
+                $gateKey = 'our_patient_';
                 $routeKey = 'admin.our_patients';
 
                 return view($template, compact('row', 'gateKey', 'routeKey'));
@@ -82,7 +82,9 @@ class OurPatientsController extends Controller
                 return $row->email ? $row->email : '';
             });
             $table->editColumn('photo', function ($row) {
-                if($row->photo) { return '<a href="'. asset(env('UPLOAD_PATH').'/' . $row->photo) .'" target="_blank"><img src="'. asset(env('UPLOAD_PATH').'/thumb/' . $row->photo) .'"/>'; };
+                if ($row->photo) {
+                    return '<a href="' . asset(env('UPLOAD_PATH') . '/' . $row->photo) . '" target="_blank"><img src="' . asset(env('UPLOAD_PATH') . '/thumb/' . $row->photo) . '"/>';
+                };
             });
             $table->editColumn('telephone', function ($row) {
                 return $row->telephone ? $row->telephone : '';
@@ -97,7 +99,7 @@ class OurPatientsController extends Controller
                 return $row->prescription ? $row->prescription : '';
             });
 
-            $table->rawColumns(['actions','massDelete','photo']);
+            $table->rawColumns(['actions', 'massDelete', 'photo']);
 
             return $table->make(true);
         }
@@ -110,9 +112,8 @@ class OurPatientsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
-    {
-        if (! Gate::allows('our_patient_create')) {
+    public function create() {
+        if (!Gate::allows('our_patient_create')) {
             return abort(401);
         }
         return view('admin.our_patients.create');
@@ -120,23 +121,30 @@ class OurPatientsController extends Controller
 
     /**
      * Store a newly created OurPatient in storage.
+     * 
+     * add the patient to the main system if not exist
      *
      * @param  \App\Http\Requests\StoreOurPatientsRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreOurPatientsRequest $request)
-    {
-        if (! Gate::allows('our_patient_create')) {
+    public function store(StoreOurPatientsRequest $request) {
+        if (!Gate::allows('our_patient_create')) {
             return abort(401);
         }
         $request = $this->saveFiles($request);
         $our_patient = OurPatient::create($request->all());
-
-
-
+        $data = $request->all();
+        $user = patient::where('huduma_no', '=', $data['huduma_no'])->first();
+        if ($user === null) {
+            $patient = new Patient;
+            $patient->huduma_no = $data['huduma_no'];
+            $patient->name = $data['f_no'] . " " . $data['m_no'] . " " . $data['l_name'];
+            $patient->zone_id = 001;
+            $patient->hospital_id = 001;
+            $patient->save();
+        }
         return redirect()->route('admin.our_patients.index');
     }
-
 
     /**
      * Show the form for editing OurPatient.
@@ -144,9 +152,8 @@ class OurPatientsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
-    {
-        if (! Gate::allows('our_patient_edit')) {
+    public function edit($id) {
+        if (!Gate::allows('our_patient_edit')) {
             return abort(401);
         }
         $our_patient = OurPatient::findOrFail($id);
@@ -161,9 +168,8 @@ class OurPatientsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateOurPatientsRequest $request, $id)
-    {
-        if (! Gate::allows('our_patient_edit')) {
+    public function update(UpdateOurPatientsRequest $request, $id) {
+        if (!Gate::allows('our_patient_edit')) {
             return abort(401);
         }
         $request = $this->saveFiles($request);
@@ -175,16 +181,14 @@ class OurPatientsController extends Controller
         return redirect()->route('admin.our_patients.index');
     }
 
-
     /**
      * Display OurPatient.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
-    {
-        if (! Gate::allows('our_patient_view')) {
+    public function show($id) {
+        if (!Gate::allows('our_patient_view')) {
             return abort(401);
         }
         $our_patient = OurPatient::findOrFail($id);
@@ -192,16 +196,14 @@ class OurPatientsController extends Controller
         return view('admin.our_patients.show', compact('our_patient'));
     }
 
-
     /**
      * Remove OurPatient from storage.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
-    {
-        if (! Gate::allows('our_patient_delete')) {
+    public function destroy($id) {
+        if (!Gate::allows('our_patient_delete')) {
             return abort(401);
         }
         $our_patient = OurPatient::findOrFail($id);
@@ -215,9 +217,8 @@ class OurPatientsController extends Controller
      *
      * @param Request $request
      */
-    public function massDestroy(Request $request)
-    {
-        if (! Gate::allows('our_patient_delete')) {
+    public function massDestroy(Request $request) {
+        if (!Gate::allows('our_patient_delete')) {
             return abort(401);
         }
         if ($request->input('ids')) {
@@ -229,16 +230,14 @@ class OurPatientsController extends Controller
         }
     }
 
-
     /**
      * Restore OurPatient from storage.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function restore($id)
-    {
-        if (! Gate::allows('our_patient_delete')) {
+    public function restore($id) {
+        if (!Gate::allows('our_patient_delete')) {
             return abort(401);
         }
         $our_patient = OurPatient::onlyTrashed()->findOrFail($id);
@@ -253,9 +252,8 @@ class OurPatientsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function perma_del($id)
-    {
-        if (! Gate::allows('our_patient_delete')) {
+    public function perma_del($id) {
+        if (!Gate::allows('our_patient_delete')) {
             return abort(401);
         }
         $our_patient = OurPatient::onlyTrashed()->findOrFail($id);
@@ -263,4 +261,5 @@ class OurPatientsController extends Controller
 
         return redirect()->route('admin.our_patients.index');
     }
+
 }
