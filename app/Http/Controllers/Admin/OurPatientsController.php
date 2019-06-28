@@ -25,9 +25,6 @@ class OurPatientsController extends Controller {
         if (!Gate::allows('our_patient_access')) {
             return abort(401);
         }
-
-
-
         if (request()->ajax()) {
             $query = OurPatient::query();
             $template = 'actionsTemplate';
