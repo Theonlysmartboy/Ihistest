@@ -15,6 +15,7 @@
         <ul class="list-inline">
             <li><a href="{{ route('admin.our_patients.index') }}" style="{{ request('show_deleted') == 1 ? '' : 'font-weight: 700' }}">@lang('quickadmin.qa_all')</a></li> |
             <li><a href="{{ route('admin.our_patients.index') }}?show_deleted=1" style="{{ request('show_deleted') == 1 ? 'font-weight: 700' : '' }}">@lang('quickadmin.qa_trash')</a></li>
+            <li><a href="{{url('search')}}" style="{{ request('show_deleted') == 1 ? '' : 'font-weight: 700' }}">Search IHIS database</a></li>
         </ul>
     </p>
     @endcan
