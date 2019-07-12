@@ -49,7 +49,7 @@ class OurPatientsController extends Controller {
                 'our_patients.address',
                 'our_patients.diagnostic',
                 'our_patients.prescription',
-            ])->where();
+            ]);
             $table = Datatables::of($query);
 
             $table->setRowAttr([
